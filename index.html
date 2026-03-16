@@ -3,308 +3,489 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="Text to PPT Generator" />
-  <meta name="theme-color" content="#667eea" />
-  <title>Text to PPT Generator</title>
-
-  <!-- Fonts & icons -->
+  <title>PPT Deck — Text to Presentation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-
-  <!-- Bootstrap (utilities/layout) -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
   <style>
-    :root{
-      --bg:#0b1118; --panel:rgba(255,255,255,0.04); --border:rgba(255,255,255,0.12);
-      --text:#e7eef6; --muted:#b6c3d4; --accent:#667eea; --chip:rgba(255,255,255,0.06);
-      --card-radius:14px;
+    :root {
+      --bg: #0c111b;
+      --surface: #131c2b;
+      --surface2: #1a2540;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.18);
+      --text: #e8f0fe;
+      --text2: #8fa3bf;
+      --accent: #5b8dee;
+      --accent2: #38bdf8;
+      --accent-glow: rgba(91,141,238,0.25);
+      --success: #22c55e;
+      --error: #f87171;
+      --radius: 12px;
+      --radius-sm: 8px;
     }
-    [data-theme="light"]{
-      --bg:#f7f9fc; --panel:#fff; --border:#e6eaf0; --text:#0f1720; --muted:#5b6b80; --accent:#3a77ff; --chip:#f2f6ff;
+    [data-theme="light"] {
+      --bg: #f0f4fb;
+      --surface: #ffffff;
+      --surface2: #e8eef8;
+      --border: rgba(0,0,0,0.09);
+      --border-hover: rgba(0,0,0,0.2);
+      --text: #0d1b2e;
+      --text2: #556578;
+      --accent: #3a6fe8;
+      --accent2: #0ea5e9;
+      --accent-glow: rgba(58,111,232,0.15);
     }
-    [data-theme="dark"]{
-      --bg:#0b1118; --panel:rgba(255,255,255,0.04); --border:rgba(255,255,255,0.12);
-      --text:#e7eef6; --muted:#b6c3d4; --accent:#667eea; --chip:rgba(255,255,255,0.06);
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100vh; font-family: Inter, system-ui, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); transition: background .2s, color .2s; }
+
+    /* ── NAV ── */
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; height: 56px;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      background: rgba(12,17,27,0.85);
+      position: sticky; top: 0; z-index: 100;
+    }
+    [data-theme="light"] .nav { background: rgba(255,255,255,0.9); }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; letter-spacing: -.3px; }
+    .nav-logo .icon-wrap {
+      width: 32px; height: 32px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: grid; place-items: center; font-size: 15px; color: #fff;
+    }
+    .nav-logo .sub { font-size: 11px; color: var(--text2); font-weight: 400; }
+    .nav-right { display: flex; gap: 8px; align-items: center; }
+    .icon-btn {
+      width: 34px; height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+      background: var(--surface); color: var(--text2); cursor: pointer;
+      display: grid; place-items: center; font-size: 13px; transition: border-color .15s, color .15s;
+    }
+    .icon-btn:hover { border-color: var(--border-hover); color: var(--text); }
+
+    /* ── LAYOUT ── */
+    .shell {
+      max-width: 1160px; margin: 0 auto; padding: 24px 16px;
+      display: grid; grid-template-columns: 1fr 300px; gap: 20px;
+    }
+    @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .6px; margin: 0 0 16px; }
+
+    /* ── HERO ── */
+    .hero { margin-bottom: 20px; }
+    .hero h1 { margin: 0 0 6px; font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
+    .hero p { margin: 0; color: var(--text2); font-size: 13.5px; line-height: 1.6; }
+
+    /* ── FORM ELEMENTS ── */
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { display: block; font-size: 12.5px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+    .field label .req { color: var(--error); margin-left: 2px; }
+
+    input[type="text"], input[type="password"], input[type="number"], select, textarea {
+      width: 100%; background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 9px 12px; font-size: 13.5px; font-family: inherit;
+      outline: none; transition: border-color .15s, box-shadow .15s;
+      appearance: none; -webkit-appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    textarea { min-height: 200px; resize: vertical; line-height: 1.6; }
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238fa3bf' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; cursor: pointer; }
+
+    .input-row { display: flex; gap: 8px; }
+    .input-row input { flex: 1; }
+
+    /* number spinner hide */
+    input[type="number"]::-webkit-inner-spin-button { opacity: 0.4; }
+
+    /* ── SLIDER ── */
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    .slider-row input[type="range"] {
+      flex: 1; height: 4px; padding: 0; border: none; border-radius: 99px;
+      background: var(--surface2); box-shadow: none;
+      accent-color: var(--accent); cursor: pointer;
+    }
+    .slider-row input[type="range"]:focus { box-shadow: none; border-color: transparent; }
+    .slide-count-badge {
+      min-width: 36px; text-align: center; font-weight: 700; font-size: 15px;
+      color: var(--accent); background: var(--surface2);
+      border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 8px;
     }
 
-    html,body{ height:100%; margin:0; font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial; background:
-      radial-gradient(1200px 600px at 15% 5%, rgba(88,124,255,0.06), transparent 60%),
-      radial-gradient(900px 500px at 85% 0%, rgba(34,211,238,0.02), transparent 60%),
-      var(--bg); color:var(--text);
+    /* ── FILE DROP ── */
+    .drop-zone {
+      border: 1.5px dashed var(--border); border-radius: var(--radius-sm);
+      padding: 18px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+      position: relative; overflow: hidden;
     }
+    .drop-zone:hover, .drop-zone.over { border-color: var(--accent); background: var(--accent-glow); }
+    .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+    .drop-zone .dz-icon { font-size: 22px; color: var(--text2); margin-bottom: 6px; }
+    .drop-zone .dz-label { font-size: 13px; color: var(--text2); }
+    .drop-zone .dz-label strong { color: var(--accent); }
+    .drop-zone .dz-file { font-size: 12px; color: var(--success); margin-top: 4px; font-weight: 500; }
 
-    .top-nav{ display:flex; align-items:center; justify-content:space-between; padding:12px 18px; position:sticky; top:0; z-index:60;
-      border-bottom:1px solid var(--border); backdrop-filter: blur(6px) saturate(120%); background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    /* ── TOGGLE ── */
+    .toggle-row { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .toggle-row .toggle-label { font-size: 13px; color: var(--text2); flex: 1; }
+    .toggle {
+      width: 36px; height: 20px; border-radius: 99px;
+      background: var(--surface2); border: 1px solid var(--border);
+      position: relative; cursor: pointer; transition: background .2s;
+      flex-shrink: 0;
     }
-    .nav-brand{ display:flex; gap:10px; align-items:center; font-weight:700 }
-    .nav-controls{ display:flex; gap:8px; align-items:center }
-    .nav-btn{ background:var(--panel); color:var(--text); border:1px solid var(--border); padding:8px 10px; border-radius:10px; cursor:pointer }
+    .toggle::after {
+      content: ''; position: absolute; left: 2px; top: 2px;
+      width: 14px; height: 14px; border-radius: 50%; background: var(--text2);
+      transition: transform .2s, background .2s;
+    }
+    .toggle.on { background: var(--accent); border-color: var(--accent); }
+    .toggle.on::after { transform: translateX(16px); background: #fff; }
+    .toggle-row input { display: none; }
 
-    .app-wrap{ max-width:1200px; margin:18px auto; display:grid; grid-template-columns:300px 1fr; gap:14px; padding:0 12px; }
-    @media (max-width:980px){ .app-wrap{ grid-template-columns:1fr } }
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 9px 16px; border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 600;
+      cursor: pointer; border: none; transition: opacity .15s, transform .1s;
+      font-family: inherit; white-space: nowrap;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      color: #fff; box-shadow: 0 4px 14px var(--accent-glow);
+      width: 100%; padding: 11px;
+    }
+    .btn-primary:hover:not(:disabled) { box-shadow: 0 6px 20px var(--accent-glow); }
+    .btn-ghost { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+    .btn-sm { padding: 6px 10px; font-size: 12px; }
 
-    .sidebar{ background:var(--panel); border:1px solid var(--border); border-radius:var(--card-radius); padding:12px; height:calc(100vh - 122px); overflow:auto; box-shadow:0 8px 24px rgba(0,0,0,0.14) }
-    .sidebar h4{ margin:0 0 8px 0; font-size:1rem }
+    /* ── PROGRESS ── */
+    .progress-wrap { height: 3px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-top: 10px; display: none; }
+    .progress-wrap.visible { display: block; }
+    .progress-bar {
+      height: 100%; width: 0%; border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width .4s ease;
+      animation: progress-pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes progress-pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
 
-    .main { min-height:560px }
-    .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); }
-    .muted { color:var(--muted) }
+    /* ── STATUS ── */
+    .status-msg { font-size: 12.5px; color: var(--text2); margin-top: 8px; min-height: 18px; display: flex; align-items: center; gap: 6px; }
+    .status-msg .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 1s infinite; flex-shrink: 0; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
 
-    .slide-panel { display:grid; grid-template-columns:1fr 360px; gap:12px; margin-top:12px }
-    @media (max-width:980px){ .slide-panel{ grid-template-columns:1fr } }
-    textarea, input, select { background:transparent; color:var(--text); border:1px solid var(--border); padding:10px; border-radius:10px; width:100%; }
-    textarea { min-height:220px; resize:vertical; }
+    /* ── OUTPUT ── */
+    .output-card {
+      margin-top: 16px; display: none; background: linear-gradient(135deg, rgba(91,141,238,0.08), rgba(56,189,248,0.05));
+      border: 1px solid rgba(91,141,238,0.3); border-radius: var(--radius); padding: 16px;
+      animation: slide-in .3s ease;
+    }
+    .output-card.visible { display: flex; align-items: center; gap: 14px; }
+    @keyframes slide-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+    .output-card .dl-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: grid; place-items: center; color: #fff; font-size: 16px; flex-shrink: 0; }
+    .output-card .dl-info { flex: 1; }
+    .output-card .dl-name { font-weight: 700; font-size: 14px; }
+    .output-card .dl-meta { color: var(--text2); font-size: 12px; margin-top: 2px; }
 
-    .btn-primary { background: linear-gradient(135deg, var(--accent), #22d3ee); border:none; color:#fff; font-weight:700; }
-    .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
-    .chip { background:var(--chip); border:1px solid var(--border); border-radius:10px; padding:8px; color:var(--muted) }
+    /* ── SIDEBAR ── */
+    .sidebar { display: flex; flex-direction: column; gap: 16px; }
+    .history-list { display: flex; flex-direction: column; gap: 8px; }
+    .history-item {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 10px 12px; display: flex; align-items: flex-start; gap: 10px; transition: border-color .15s;
+    }
+    .history-item:hover { border-color: var(--border-hover); }
+    .history-item .hi-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+    .history-item .hi-info { flex: 1; min-width: 0; }
+    .history-item .hi-name { font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-item .hi-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .history-item .hi-actions { display: flex; gap: 4px; }
+    .hi-empty { font-size: 12.5px; color: var(--text2); text-align: center; padding: 24px 0; }
+    .history-footer { display: flex; gap: 8px; }
 
-    .toast-wrap { position:fixed; right:18px; bottom:18px; z-index:1400; display:flex; flex-direction:column; gap:8px }
-    .toast { background:var(--panel); border:1px solid var(--border); padding:10px 12px; border-left:4px solid var(--accent); border-radius:8px; color:var(--text); box-shadow:0 10px 30px rgba(0,0,0,0.12) }
-    .toast.success { border-left-color:#22c55e }
-    .toast.error { border-left-color:#ef4444 }
+    /* ── PROVIDER BADGE ── */
+    .provider-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); }
 
-    .small-muted{ font-size:.9rem; color:var(--muted) }
-    [aria-live] { outline: none }
+    /* ── SECTION DIVIDER ── */
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+    /* ── TOASTS ── */
+    .toasts { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 10px 14px; color: var(--text); font-size: 13px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.25); pointer-events: all;
+      display: flex; align-items: center; gap: 10px;
+      animation: toast-in .2s ease; max-width: 320px;
+    }
+    @keyframes toast-in { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+    .toast .t-bar { width: 3px; height: 100%; min-height: 18px; border-radius: 99px; background: var(--accent); flex-shrink: 0; }
+    .toast.success .t-bar { background: var(--success); }
+    .toast.error .t-bar { background: var(--error); }
+    .toast .t-close { margin-left: auto; background: none; border: none; color: var(--text2); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 0 0 8px; }
   </style>
 </head>
 <body>
-  <header class="top-nav" role="banner">
-    <div class="nav-brand">
-      <i class="fas fa-brain"></i>
-      <div style="display:flex;flex-direction:column;line-height:1">
-        <span class="brand-text">PPT Deck</span>
-        <small class="muted">PPTX Generator</small>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-logo">
+      <div class="icon-wrap"><i class="fas fa-layer-group"></i></div>
+      <div>
+        <div>PPT Deck</div>
+        <div class="sub">Text to Presentation</div>
       </div>
     </div>
-    <div class="nav-controls">
-      <button id="theme-toggle" class="nav-btn" title="Toggle theme"><i class="fas fa-moon"></i></button>
+    <div class="nav-right">
+      <button id="theme-toggle" class="icon-btn" title="Toggle theme"><i class="fas fa-moon"></i></button>
     </div>
-  </header>
+  </nav>
 
-  <div class="app-wrap" role="main">
-    <!-- Sidebar -->
-    <aside class="sidebar" aria-label="History">
-      <h4>History</h4>
-      <div id="historyList" style="display:flex;flex-direction:column;gap:8px;min-height:120px"></div>
+  <!-- SHELL -->
+  <div class="shell">
 
-      <div style="margin-top:12px;display:flex;gap:8px">
-        <button id="export-history" class="btn btn-ghost" title="Export history"><i class="fas fa-download"></i></button>
-        <button id="clear-history" class="btn btn-ghost" title="Clear history"><i class="fas fa-trash"></i></button>
+    <!-- MAIN COLUMN -->
+    <div>
+      <div class="hero">
+        <h1>Generate a Presentation</h1>
+        <p>Paste your content, pick an LLM, optionally upload a branded template — get a styled .pptx instantly.</p>
       </div>
 
-      <div style="margin-top:12px" class="small-muted">Local history stores only metadata (no API keys / files).</div>
-    </aside>
+      <!-- Content card -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Content</div>
 
-    <!-- Main -->
-    <main class="main">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:start;gap:12px">
-          <div>
-            <h2 style="margin:0">Auto-generate a Presentation</h2>
-            <div class="muted" style="margin-top:6px">Paste text / Markdown, choose provider & model, optionally upload a template and download the generated .pptx</div>
+        <div class="field">
+          <label for="text">Your text or Markdown <span class="req">*</span></label>
+          <textarea id="text" placeholder="Paste or type your content here — articles, notes, reports, markdown…"></textarea>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="field">
+            <label for="guidance">One-line guidance <span style="color:var(--text2);font-weight:400">(optional)</span></label>
+            <input id="guidance" type="text" placeholder="e.g. investor pitch, product overview">
           </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button id="clear-form" class="btn btn-ghost" title="Clear form"><i class="fas fa-eraser"></i></button>
+          <div class="field">
+            <label for="ppt_name">Presentation name <span style="color:var(--text2);font-weight:400">(optional)</span></label>
+            <input id="ppt_name" type="text" placeholder="e.g. Q4 Strategy Deck">
           </div>
         </div>
 
-        <div class="slide-panel">
-          <!-- left: content -->
-          <section class="card" style="padding:14px">
-            <h4 style="margin-top:0">Content</h4>
-            <label for="text">Your Text or Markdown</label>
-            <textarea id="text" placeholder="Paste or type your content here..."></textarea>
+        <div class="field">
+          <label>Number of slides</label>
+          <div class="slider-row">
+            <input id="num_slides_range" type="range" min="1" max="40" value="10">
+            <div class="slide-count-badge" id="slide-count-display">10</div>
+            <input id="num_slides" type="number" min="1" max="40" value="10" style="width:64px;flex-shrink:0;text-align:center">
+          </div>
+        </div>
 
-            <div style="display:grid;grid-template-columns:1fr 140px;gap:10px;margin-top:10px">
-              <div>
-                <label for="guidance">One-line guidance (optional)</label>
-                <input id="guidance" type="text" placeholder="e.g., investor pitch, tech summary">
-              </div>
-              <div>
-                <label for="num_slides">Number of slides</label>
-                <input id="num_slides" type="number" min="1" max="40" value="10">
-                <div class="small-muted">1–40</div>
-              </div>
-            </div>
-
-            <label for="ppt_name" style="margin-top:10px">Presentation name</label>
-            <input id="ppt_name" type="text" placeholder="e.g., Q4 Strategy Deck">
-
-            <label for="template" style="margin-top:10px">Template (.pptx/.potx) — optional</label>
+        <div class="field">
+          <label>Template <span style="color:var(--text2);font-weight:400">(.pptx / .potx — optional)</span></label>
+          <div class="drop-zone" id="drop-zone">
             <input id="template" type="file" accept=".pptx,.potx">
+            <div class="dz-icon"><i class="fas fa-file-powerpoint"></i></div>
+            <div class="dz-label"><strong>Click to upload</strong> or drag & drop</div>
+            <div class="dz-label" style="font-size:11px;margin-top:2px">.pptx or .potx</div>
+            <div class="dz-file" id="dz-file-name" style="display:none"></div>
+          </div>
+        </div>
 
-            <label style="margin-top:10px"><input id="reuse_images" type="checkbox"> Reuse images from template (safe placement)</label>
-          </section>
+        <label class="toggle-row" id="reuse-toggle-row">
+          <input id="reuse_images" type="checkbox">
+          <div class="toggle" id="reuse-toggle"></div>
+          <span class="toggle-label">Reuse images from template (safe placement)</span>
+        </label>
+      </div>
 
-          <!-- right: provider & controls -->
-          <aside class="card" style="padding:14px">
-            <h4 style="margin-top:0">Provider & Settings</h4>
+      <!-- Provider card -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Provider & Model</div>
 
-            <label for="provider">LLM Provider</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="field">
+            <label for="provider">LLM Provider <span class="req">*</span></label>
             <select id="provider">
               <option value="aipipe">AI Pipe (OpenRouter)</option>
               <option value="openai">OpenAI</option>
               <option value="gemini">Gemini (Google)</option>
               <option value="anthropic">Anthropic (Claude)</option>
             </select>
-
-            <label for="api_key" style="margin-top:8px">API Key / Token</label>
-            <div style="display:flex;gap:8px">
-              <input id="api_key" type="password" placeholder="Paste your key/token..." style="flex:1">
-              <button id="paste_key" class="nav-btn" title="Paste from clipboard"><i class="fas fa-clipboard"></i></button>
-            </div>
-
-            <label for="model" style="margin-top:8px">Model</label>
+          </div>
+          <div class="field">
+            <label for="model">Model</label>
             <select id="model"></select>
-            <div id="model_hint" class="small-muted" style="margin-top:6px">Select provider to view models</div>
-
-            <div style="display:flex;gap:8px;margin-top:12px">
-              <button id="generate" class="btn btn-primary" disabled><i class="fas fa-magic"></i> Generate .pptx</button>
-              <button id="btn_clear" class="btn btn-ghost">Clear</button>
-            </div>
-
-            <div id="status" aria-live="polite" class="small-muted" style="margin-top:10px"></div>
-          </aside>
+          </div>
         </div>
 
-        <!-- output preview -->
-        <div id="output" style="margin-top:12px"></div>
+        <div class="field">
+          <label for="api_key">API Key / Token <span class="req">*</span></label>
+          <div class="input-row">
+            <input id="api_key" type="password" placeholder="Paste your key…">
+            <button id="paste_key" class="btn btn-ghost btn-sm" title="Paste from clipboard" style="white-space:nowrap"><i class="fas fa-clipboard"></i></button>
+          </div>
+        </div>
       </div>
-    </main>
+
+      <!-- Generate -->
+      <div class="card">
+        <button id="generate" class="btn btn-primary" disabled>
+          <i class="fas fa-magic"></i> Generate Presentation
+        </button>
+
+        <div class="progress-wrap" id="progress-wrap">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+
+        <div class="status-msg" id="status-wrap" style="display:none">
+          <div class="dot"></div>
+          <span id="status"></span>
+        </div>
+
+        <!-- Output -->
+        <div class="output-card" id="output">
+          <div class="dl-icon"><i class="fas fa-file-powerpoint"></i></div>
+          <div class="dl-info">
+            <div class="dl-name" id="out-name"></div>
+            <div class="dl-meta" id="out-meta"></div>
+          </div>
+          <button id="dl-now" class="btn btn-primary" style="width:auto;padding:9px 16px">
+            <i class="fas fa-download"></i> Download
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin:0">History</div>
+          <div style="display:flex;gap:6px">
+            <button id="export-history" class="icon-btn" title="Export history" style="width:28px;height:28px;font-size:11px"><i class="fas fa-download"></i></button>
+            <button id="clear-history" class="icon-btn" title="Clear history" style="width:28px;height:28px;font-size:11px"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="history-list" id="historyList"></div>
+        <div style="margin-top:12px;font-size:11px;color:var(--text2)">Stores metadata only — no API keys or files.</div>
+      </div>
+    </aside>
+
   </div>
 
-  <div id="toasts" class="toast-wrap" aria-live="polite"></div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <div class="toasts" id="toasts"></div>
 
   <script>
-  (function(){
-    const providerEl    = document.getElementById('provider');
-    const modelEl       = document.getElementById('model');
-    const modelHintEl   = document.getElementById('model_hint');
-    const apiKeyEl      = document.getElementById('api_key');
-    const pasteKeyBtn   = document.getElementById('paste_key');
-    const textEl        = document.getElementById('text');
-    const guidanceEl    = document.getElementById('guidance');
-    const numSlidesEl   = document.getElementById('num_slides');
-    const pptNameEl     = document.getElementById('ppt_name');
-    const templateEl    = document.getElementById('template');
-    const reuseImagesEl = document.getElementById('reuse_images');
-    const generateBtn   = document.getElementById('generate');
-    const clearBtn      = document.getElementById('btn_clear');
-    const clearFormBtn  = document.getElementById('clear-form');
-    const statusEl      = document.getElementById('status');
-    const outputEl      = document.getElementById('output');
-    const historyListEl = document.getElementById('historyList');
-    const exportHistoryBtn = document.getElementById('export-history');
-    const clearHistoryBtn  = document.getElementById('clear-history');
-    const toastsEl      = document.getElementById('toasts');
-    const themeToggle   = document.getElementById('theme-toggle');
+  (function () {
+    const $ = id => document.getElementById(id);
+    const providerEl    = $('provider');
+    const modelEl       = $('model');
+    const apiKeyEl      = $('api_key');
+    const pasteKeyBtn   = $('paste_key');
+    const textEl        = $('text');
+    const guidanceEl    = $('guidance');
+    const numSlidesEl   = $('num_slides');
+    const rangeEl       = $('num_slides_range');
+    const slideDisplay  = $('slide-count-display');
+    const pptNameEl     = $('ppt_name');
+    const templateEl    = $('template');
+    const reuseEl       = $('reuse_images');
+    const reuseToggle   = $('reuse-toggle');
+    const generateBtn   = $('generate');
+    const statusEl      = $('status');
+    const statusWrap    = $('status-wrap');
+    const progressWrap  = $('progress-wrap');
+    const progressBar   = $('progress-bar');
+    const outputEl      = $('output');
+    const outName       = $('out-name');
+    const outMeta       = $('out-meta');
+    const dlNow         = $('dl-now');
+    const historyList   = $('historyList');
+    const exportBtn     = $('export-history');
+    const clearHBtn     = $('clear-history');
+    const themeToggle   = $('theme-toggle');
+    const dropZone      = $('drop-zone');
+    const dzFileName    = $('dz-file-name');
 
     const HISTORY_KEY = 'ppt_deck_history_v1';
     const STATE_KEY   = 'ppt_deck_state_v1';
     let lastBlobUrl = null;
+    let lastMeta    = null;
 
     const MODELS = {
-      openai: [
-        {id:'gpt-4o-mini', label:'gpt-4o-mini'},
-        {id:'gpt-4o', label:'gpt-4o'},
-        {id:'gpt-4.1-nano', label:'gpt-4.1-nano'},
-        {id:'gpt-4o-realtime-preview', label:'gpt-4o-realtime-preview'},
-        {id:'gpt-4.1', label:'gpt-4.1'}
-      ],
-      aipipe: [
-        {id:'gpt-4o-mini', label:'gpt-4o-mini'},
-        {id:'gpt-4o', label:'gpt-4o'},
-        {id:'gpt-4.1-nano', label:'gpt-4.1-nano'}
-      ],
-      gemini: [
-        {id:'gemini-2.0-flash', label:'gemini-2.0-flash'},
-        {id:'gemini-2.5-flash', label:'gemini-2.5-flash'},
-        {id:'gemini-2.5-pro', label:'gemini-2.5-pro'}
-      ],
-      anthropic: [
-        {id:'claude-haiku-4-5-20251001', label:'claude-haiku-4-5'},
-        {id:'claude-sonnet-4-6', label:'claude-sonnet-4-6'},
-        {id:'claude-opus-4-6', label:'claude-opus-4-6'},
-        {id:'claude-3-5-sonnet-latest', label:'claude-3-5-sonnet-latest'}
-      ]
+      aipipe:    [{id:'gpt-4o-mini',label:'gpt-4o-mini'},{id:'gpt-4o',label:'gpt-4o'},{id:'gpt-4.1-nano',label:'gpt-4.1-nano'}],
+      openai:    [{id:'gpt-4o-mini',label:'gpt-4o-mini'},{id:'gpt-4o',label:'gpt-4o'},{id:'gpt-4.1-nano',label:'gpt-4.1-nano'},{id:'gpt-4.1',label:'gpt-4.1'}],
+      gemini:    [{id:'gemini-2.0-flash',label:'gemini-2.0-flash'},{id:'gemini-2.5-flash',label:'gemini-2.5-flash'},{id:'gemini-2.5-pro',label:'gemini-2.5-pro'}],
+      anthropic: [{id:'claude-haiku-4-5-20251001',label:'claude-haiku-4-5'},{id:'claude-sonnet-4-6',label:'claude-sonnet-4-6'},{id:'claude-opus-4-6',label:'claude-opus-4-6'}]
     };
 
-    function toast(msg, kind='info') {
-      const el = document.createElement('div');
-      el.className = 'toast ' + (kind==='success'?'success': kind==='error'?'error':'');
-      el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div>${msg}</div><button aria-label="close" style="background:none;border:none;color:var(--muted);cursor:pointer">&times;</button></div>`;
-      toastsEl.appendChild(el);
-      el.querySelector('button').onclick = () => el.remove();
-      setTimeout(() => el.remove(), 4500);
-    }
-
-    function readHistory() {
-      try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
-    }
-    function writeHistory(arr) {
-      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(arr.slice(0, 200))); } catch {}
-    }
-    function addHistory(meta) { const arr = readHistory(); arr.unshift(meta); writeHistory(arr); renderHistory(); }
-
-    function renderHistory() {
-      const arr = readHistory();
-      historyListEl.innerHTML = '';
-      if (!arr.length) { historyListEl.innerHTML = '<div class="small-muted">No generations yet</div>'; return; }
-      for (const h of arr) {
-        const el = document.createElement('div');
-        el.className = 'card';
-        el.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px;gap:8px';
-        el.innerHTML = `<div><strong>${escapeHtml(h.name || h.title || 'Deck')}</strong><div class="small-muted">${new Date(h.ts).toLocaleString()} • ${h.model||''} • ${h.slides} slides</div></div>
-                        <div style="display:flex;gap:8px">
-                          <button class="btn btn-ghost btn-sm" data-act="recreate" title="Reload params"><i class="fas fa-repeat"></i></button>
-                          <button class="btn btn-ghost btn-sm" data-act="download" title="Re-generate & download"><i class="fas fa-download"></i></button>
-                        </div>`;
-        historyListEl.appendChild(el);
-        el.querySelector('[data-act="recreate"]').onclick = () => { genLoadMeta(h); toast('Parameters loaded', 'success'); };
-        el.querySelector('[data-act="download"]').onclick = () => { genLoadMeta(h); generate(); toast('Recreating deck…', 'info'); };
-      }
-    }
-
-    function escapeHtml(s='') { return (''+s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-    function loadState() {
-      try {
-        const s = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
-        if (s.apiKeyPrefix) apiKeyEl.value = s.apiKeyPrefix;
-      } catch {}
-    }
-    function saveState() {
-      try { localStorage.setItem(STATE_KEY, JSON.stringify({ apiKeyPrefix: apiKeyEl.value ? apiKeyEl.value.slice(0,32) : '' })); } catch {}
-    }
-    window.addEventListener('beforeunload', saveState);
-
-    function applyModels() {
-      const p = providerEl.value;
-      modelEl.innerHTML = '';
-      (MODELS[p] || []).forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.id; opt.textContent = m.label;
-        modelEl.appendChild(opt);
-      });
-      modelHintEl.textContent = p === 'openai' ? 'OpenAI models' : p === 'aipipe' ? 'AI Pipe (OpenRouter) models' : p === 'anthropic' ? 'Anthropic models' : 'Gemini models';
-    }
-
-    providerEl.addEventListener('change', () => { applyModels(); validate(); });
-
-    pasteKeyBtn.addEventListener('click', async () => {
-      try {
-        const text = await navigator.clipboard.readText();
-        apiKeyEl.value = (text || '').trim();
-        toast('API key pasted', 'success');
-        validate();
-      } catch { toast('Clipboard access denied', 'error'); }
+    // ── Slider sync ──
+    rangeEl.addEventListener('input', () => {
+      numSlidesEl.value = rangeEl.value;
+      slideDisplay.textContent = rangeEl.value;
+      validate();
+    });
+    numSlidesEl.addEventListener('input', () => {
+      rangeEl.value = numSlidesEl.value;
+      slideDisplay.textContent = numSlidesEl.value;
+      validate();
     });
 
+    // ── Toggle ──
+    $('reuse-toggle-row').addEventListener('click', e => {
+      if (e.target === reuseEl) return;
+      reuseEl.checked = !reuseEl.checked;
+      reuseToggle.classList.toggle('on', reuseEl.checked);
+    });
+    reuseEl.addEventListener('change', () => reuseToggle.classList.toggle('on', reuseEl.checked));
+
+    // ── Drop zone ──
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('over');
+      const f = e.dataTransfer.files[0];
+      if (f) showFile(f);
+    });
+    templateEl.addEventListener('change', () => { if (templateEl.files[0]) showFile(templateEl.files[0]); });
+    function showFile(f) {
+      dzFileName.textContent = f.name;
+      dzFileName.style.display = 'block';
+    }
+
+    // ── Models ──
+    function applyModels() {
+      modelEl.innerHTML = '';
+      (MODELS[providerEl.value] || []).forEach(m => {
+        const o = document.createElement('option');
+        o.value = m.id; o.textContent = m.label;
+        modelEl.appendChild(o);
+      });
+    }
+    providerEl.addEventListener('change', () => { applyModels(); validate(); });
+
+    // ── Paste key ──
+    pasteKeyBtn.addEventListener('click', async () => {
+      try { apiKeyEl.value = (await navigator.clipboard.readText()).trim(); validate(); toast('API key pasted', 'success'); }
+      catch { toast('Clipboard access denied', 'error'); }
+    });
+
+    // ── Validate ──
     function validate() {
       const ok = (textEl.value||'').trim().length > 10 &&
                  (apiKeyEl.value||'').trim().length > 6 &&
@@ -313,131 +494,178 @@
       return ok;
     }
     [textEl, apiKeyEl, numSlidesEl].forEach(el => el.addEventListener('input', validate));
-    applyModels(); loadState(); renderHistory(); validate();
 
-    clearBtn.addEventListener('click', () => {
-      textEl.value=''; guidanceEl.value=''; numSlidesEl.value=10; pptNameEl.value='';
-      templateEl.value=''; reuseImagesEl.checked=false; statusEl.textContent=''; validate();
-    });
-    clearFormBtn.addEventListener('click', () => clearBtn.click());
+    // ── State ──
+    function loadState() {
+      try {
+        const s = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
+        if (s.key) apiKeyEl.value = s.key;
+        if (s.provider) { providerEl.value = s.provider; applyModels(); }
+        if (s.model) modelEl.value = s.model;
+      } catch {}
+    }
+    function saveState() {
+      try { localStorage.setItem(STATE_KEY, JSON.stringify({ key: apiKeyEl.value.slice(0,32), provider: providerEl.value, model: modelEl.value })); } catch {}
+    }
+    window.addEventListener('beforeunload', saveState);
 
-    function getFileName() {
-      const name = (pptNameEl.value || '').trim();
-      return name ? name.replace(/[\\/:*?"<>|]/g, '_') + '.pptx' : 'generated.pptx';
+    // ── History ──
+    function readHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; } }
+    function writeHistory(arr) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(arr.slice(0,200))); } catch {} }
+    function addHistory(m) { const a = readHistory(); a.unshift(m); writeHistory(a); renderHistory(); }
+
+    function renderHistory() {
+      const arr = readHistory();
+      historyList.innerHTML = '';
+      if (!arr.length) { historyList.innerHTML = '<div class="hi-empty"><i class="fas fa-clock" style="font-size:20px;margin-bottom:8px;display:block;opacity:.4"></i>No generations yet</div>'; return; }
+      for (const h of arr) {
+        const el = document.createElement('div');
+        el.className = 'history-item';
+        el.innerHTML = `<div class="hi-dot"></div>
+          <div class="hi-info">
+            <div class="hi-name">${esc(h.name || h.title || 'Deck')}</div>
+            <div class="hi-meta">${new Date(h.ts).toLocaleDateString()} · ${h.slides} slides · ${(h.model||'').split('-').slice(0,2).join('-')}</div>
+          </div>
+          <div class="hi-actions">
+            <button class="icon-btn btn-sm" data-act="recreate" title="Reload" style="width:26px;height:26px;font-size:11px"><i class="fas fa-rotate-left"></i></button>
+            <button class="icon-btn btn-sm" data-act="regen" title="Re-generate" style="width:26px;height:26px;font-size:11px"><i class="fas fa-download"></i></button>
+          </div>`;
+        historyList.appendChild(el);
+        el.querySelector('[data-act="recreate"]').onclick = () => { loadMeta(h); toast('Parameters loaded', 'success'); };
+        el.querySelector('[data-act="regen"]').onclick = () => { loadMeta(h); generate(); };
+      }
     }
 
+    function loadMeta(h) {
+      textEl.value = h.text || textEl.value;
+      guidanceEl.value = h.guidance || '';
+      numSlidesEl.value = rangeEl.value = h.slides || 10;
+      slideDisplay.textContent = numSlidesEl.value;
+      pptNameEl.value = h.name || '';
+      if (h.provider) { providerEl.value = h.provider; applyModels(); }
+      if (h.model) modelEl.value = h.model;
+      validate();
+    }
+
+    function esc(s) { return (''+s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    // ── Generate ──
     async function generate() {
-      if (!validate()) { toast('Please complete required fields', 'error'); return; }
+      if (!validate()) { toast('Please fill required fields', 'error'); return; }
       setBusy(true);
-      statusEl.textContent = 'Generating…';
+
+      let prog = 0;
+      const progTimer = setInterval(() => {
+        prog = Math.min(prog + Math.random() * 8, 85);
+        progressBar.style.width = prog + '%';
+      }, 400);
 
       try {
         const fd = new FormData();
-        fd.append('text',        (textEl.value||'').trim());
-        fd.append('guidance',    (guidanceEl.value||'').trim());
-        fd.append('provider',    providerEl.value);
-        fd.append('api_key',     apiKeyEl.value);
-        fd.append('model',       modelEl.value);
-        fd.append('num_slides',  numSlidesEl.value);
-        fd.append('reuse_images', reuseImagesEl.checked ? 'true' : 'false');
+        fd.append('text',         (textEl.value||'').trim());
+        fd.append('guidance',     (guidanceEl.value||'').trim());
+        fd.append('provider',     providerEl.value);
+        fd.append('api_key',      apiKeyEl.value);
+        fd.append('model',        modelEl.value);
+        fd.append('num_slides',   numSlidesEl.value);
+        fd.append('reuse_images', reuseEl.checked ? 'true' : 'false');
         if (templateEl.files && templateEl.files[0]) fd.append('template', templateEl.files[0]);
 
-        const resp = await fetch('/generate', { method:'POST', body: fd });
+        const resp = await fetch('/generate', { method: 'POST', body: fd });
         if (!resp.ok) {
-          const txt = await resp.text().catch(()=>'');
-          let hint = '';
-          if (resp.status===401) hint=' — invalid/missing key';
-          else if (resp.status===429) hint=' — rate limit';
-          else if (/model|not\s*found|unsupported/i.test(txt)) hint=' — model not allowed for your key';
-          throw new Error(`Server ${resp.status}${hint} ${txt}`);
+          const txt = await resp.text().catch(() => '');
+          let hint = resp.status === 401 ? ' — invalid key' : resp.status === 429 ? ' — rate limit' : '';
+          throw new Error(`Server ${resp.status}${hint}`);
         }
 
         const blob = await resp.blob();
         if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
         lastBlobUrl = URL.createObjectURL(blob);
 
-        const fileName = getFileName();
-        const meta = {
-          ts: Date.now(),
-          name: (pptNameEl.value||'').trim() || null,
-          title: (guidanceEl.value || textEl.value.slice(0,80)).replace(/\n/g,' '),
+        const name = (pptNameEl.value || '').trim();
+        const fileName = name ? name.replace(/[\\/:*?"<>|]/g, '_') + '.pptx' : 'generated.pptx';
+        lastMeta = {
+          ts: Date.now(), name: name || null,
+          title: (guidanceEl.value || textEl.value.slice(0, 60)).replace(/\n/g, ' '),
           slides: Number(numSlidesEl.value),
-          provider: providerEl.value,
-          model: modelEl.value,
-          text: (textEl.value||'').slice(0,200),
-          fileName,
+          provider: providerEl.value, model: modelEl.value,
+          text: (textEl.value||'').slice(0, 200), fileName,
         };
-        addHistory(meta);
-        renderOutput(meta);
-        statusEl.textContent = 'Ready';
-        toast('Presentation generated', 'success');
+        addHistory(lastMeta);
+        showOutput(lastMeta);
+        progressBar.style.width = '100%';
+        toast('Presentation ready!', 'success');
       } catch (err) {
         console.error(err);
-        statusEl.textContent = 'Error: ' + (err.message||'Unknown');
-        toast('Generate failed: ' + (err.message||'Unknown'), 'error');
+        setStatus('Error: ' + (err.message || 'Unknown'));
+        toast('Failed: ' + (err.message || 'Unknown'), 'error');
       } finally {
+        clearInterval(progTimer);
+        setTimeout(() => { progressWrap.classList.remove('visible'); progressBar.style.width = '0%'; }, 600);
         setBusy(false);
       }
     }
 
     function setBusy(b) {
       generateBtn.disabled = b;
-      generateBtn.innerHTML = b ? '<i class="fas fa-circle-notch fa-spin"></i> Generating...' : '<i class="fas fa-magic"></i> Generate .pptx';
+      generateBtn.innerHTML = b
+        ? '<i class="fas fa-circle-notch fa-spin"></i> Generating…'
+        : '<i class="fas fa-magic"></i> Generate Presentation';
+      statusWrap.style.display = b ? 'flex' : 'none';
+      if (b) { setStatus('Contacting LLM…'); progressWrap.classList.add('visible'); }
     }
 
-    function renderOutput(meta) {
-      outputEl.innerHTML = '';
-      const box = document.createElement('div');
-      box.className = 'card';
-      box.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px';
-      box.innerHTML = `<div><strong>${escapeHtml(meta.name || meta.title)}</strong>
-                         <div class="small-muted">${new Date(meta.ts).toLocaleString()} • ${meta.slides} slides • ${meta.model}</div></div>
-                       <button id="dl-now" class="btn btn-primary small"><i class="fas fa-download"></i> Download ${escapeHtml(meta.fileName)}</button>`;
-      outputEl.appendChild(box);
-      document.getElementById('dl-now').onclick = () => {
-        if (!lastBlobUrl) { toast('No file available', 'error'); return; }
-        const a = document.createElement('a'); a.href = lastBlobUrl; a.download = meta.fileName; a.click();
-      };
+    function setStatus(msg) { statusEl.textContent = msg; }
+
+    function showOutput(m) {
+      outName.textContent = m.name || m.title || 'Presentation';
+      outMeta.textContent = `${new Date(m.ts).toLocaleString()} · ${m.slides} slides · ${m.model} · ${m.fileName}`;
+      outputEl.classList.add('visible');
     }
 
-    function genLoadMeta(h) {
-      textEl.value    = h.text     || textEl.value;
-      guidanceEl.value= h.guidance || guidanceEl.value;
-      numSlidesEl.value = h.slides || numSlidesEl.value;
-      pptNameEl.value = h.name    || '';
-      providerEl.value = h.provider || providerEl.value;
-      applyModels();
-      modelEl.value = h.model || modelEl.value;
-      validate();
+    dlNow.onclick = () => {
+      if (!lastBlobUrl || !lastMeta) { toast('No file available', 'error'); return; }
+      const a = document.createElement('a'); a.href = lastBlobUrl; a.download = lastMeta.fileName; a.click();
+    };
+
+    // ── Toast ──
+    function toast(msg, kind = 'info') {
+      const el = document.createElement('div');
+      el.className = 'toast ' + (kind === 'success' ? 'success' : kind === 'error' ? 'error' : '');
+      el.innerHTML = `<div class="t-bar"></div><span>${esc(msg)}</span><button class="t-close">&times;</button>`;
+      $('toasts').appendChild(el);
+      el.querySelector('.t-close').onclick = () => el.remove();
+      setTimeout(() => el.remove(), 4000);
     }
 
-    exportHistoryBtn.addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify(readHistory(), null, 2)], {type:'application/json'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ppt_deck_history.json'; a.click();
-    });
-    clearHistoryBtn.addEventListener('click', () => { writeHistory([]); renderHistory(); toast('History cleared', 'success'); });
-
+    // ── Theme ──
     function applyTheme(t) {
       document.documentElement.setAttribute('data-theme', t);
-      themeToggle.querySelector('i').className = t==='light' ? 'fas fa-sun' : 'fas fa-moon';
+      themeToggle.querySelector('i').className = t === 'light' ? 'fas fa-sun' : 'fas fa-moon';
       try { localStorage.setItem('ppt_theme', t); } catch {}
     }
-    themeToggle.addEventListener('click', () => {
-      applyTheme(document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
-    });
+    themeToggle.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
 
-    window.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='g') { e.preventDefault(); if (!generateBtn.disabled) generate(); }
+    // ── Keyboard shortcut ──
+    window.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'g') { e.preventDefault(); if (!generateBtn.disabled) generate(); }
     });
 
     generateBtn.addEventListener('click', generate);
+    exportBtn.addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(readHistory(), null, 2)], {type: 'application/json'}));
+      a.download = 'ppt_deck_history.json'; a.click();
+    });
+    clearHBtn.addEventListener('click', () => { writeHistory([]); renderHistory(); toast('History cleared', 'success'); });
 
+    // ── Init ──
     (function init() {
       try {
         const saved = localStorage.getItem('ppt_theme');
         applyTheme(saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
       } catch { applyTheme('dark'); }
-      loadState(); applyModels(); renderHistory();
+      applyModels(); loadState(); renderHistory(); validate();
     })();
   })();
   </script>
