@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Text to PPT Generator" />
+  <meta name="theme-color" content="#667eea" />
+  <title>Text to PPT Generator</title>
+
+  <!-- Fonts & icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Bootstrap (utilities/layout) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0b1118; --panel:rgba(255,255,255,0.04); --border:rgba(255,255,255,0.12);
+      --text:#e7eef6; --muted:#b6c3d4; --accent:#667eea; --chip:rgba(255,255,255,0.06);
+      --card-radius:14px;
+    }
+    [data-theme="light"]{
+      --bg:#f7f9fc; --panel:#fff; --border:#e6eaf0; --text:#0f1720; --muted:#5b6b80; --accent:#3a77ff; --chip:#f2f6ff;
+    }
+    [data-theme="dark"]{
+      --bg:#0b1118; --panel:rgba(255,255,255,0.04); --border:rgba(255,255,255,0.12);
+      --text:#e7eef6; --muted:#b6c3d4; --accent:#667eea; --chip:rgba(255,255,255,0.06);
+    }
+
+    html,body{ height:100%; margin:0; font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial; background:
+      radial-gradient(1200px 600px at 15% 5%, rgba(88,124,255,0.06), transparent 60%),
+      radial-gradient(900px 500px at 85% 0%, rgba(34,211,238,0.02), transparent 60%),
+      var(--bg); color:var(--text);
+    }
+
+    .top-nav{ display:flex; align-items:center; justify-content:space-between; padding:12px 18px; position:sticky; top:0; z-index:60;
+      border-bottom:1px solid var(--border); backdrop-filter: blur(6px) saturate(120%); background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    }
+    .nav-brand{ display:flex; gap:10px; align-items:center; font-weight:700 }
+    .nav-controls{ display:flex; gap:8px; align-items:center }
+    .nav-btn{ background:var(--panel); color:var(--text); border:1px solid var(--border); padding:8px 10px; border-radius:10px; cursor:pointer }
+
+    .app-wrap{ max-width:1200px; margin:18px auto; display:grid; grid-template-columns:300px 1fr; gap:14px; padding:0 12px; }
+    @media (max-width:980px){ .app-wrap{ grid-template-columns:1fr } }
+
+    .sidebar{ background:var(--panel); border:1px solid var(--border); border-radius:var(--card-radius); padding:12px; height:calc(100vh - 122px); overflow:auto; box-shadow:0 8px 24px rgba(0,0,0,0.14) }
+    .sidebar h4{ margin:0 0 8px 0; font-size:1rem }
+
+    .main { min-height:560px }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); }
+    .muted { color:var(--muted) }
+
+    .slide-panel { display:grid; grid-template-columns:1fr 360px; gap:12px; margin-top:12px }
+    @media (max-width:980px){ .slide-panel{ grid-template-columns:1fr } }
+    textarea, input, select { background:transparent; color:var(--text); border:1px solid var(--border); padding:10px; border-radius:10px; width:100%; }
+    textarea { min-height:220px; resize:vertical; }
+
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #22d3ee); border:none; color:#fff; font-weight:700; }
+    .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+    .chip { background:var(--chip); border:1px solid var(--border); border-radius:10px; padding:8px; color:var(--muted) }
+
+    .toast-wrap { position:fixed; right:18px; bottom:18px; z-index:1400; display:flex; flex-direction:column; gap:8px }
+    .toast { background:var(--panel); border:1px solid var(--border); padding:10px 12px; border-left:4px solid var(--accent); border-radius:8px; color:var(--text); box-shadow:0 10px 30px rgba(0,0,0,0.12) }
+    .toast.success { border-left-color:#22c55e }
+    .toast.error { border-left-color:#ef4444 }
+
+    .small-muted{ font-size:.9rem; color:var(--muted) }
+    [aria-live] { outline: none }
+  </style>
+</head>
+<body>
+  <header class="top-nav" role="banner">
+    <div class="nav-brand">
+      <i class="fas fa-brain"></i>
+      <div style="display:flex;flex-direction:column;line-height:1">
+        <span class="brand-text">PPT Deck</span>
+        <small class="muted">PPTX Generator</small>
+      </div>
+    </div>
+    <div class="nav-controls">
+      <button id="theme-toggle" class="nav-btn" title="Toggle theme"><i class="fas fa-moon"></i></button>
+    </div>
+  </header>
+
+  <div class="app-wrap" role="main">
+    <!-- Sidebar -->
+    <aside class="sidebar" aria-label="History">
+      <h4>History</h4>
+      <div id="historyList" style="display:flex;flex-direction:column;gap:8px;min-height:120px"></div>
+
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button id="export-history" class="btn btn-ghost" title="Export history"><i class="fas fa-download"></i></button>
+        <button id="clear-history" class="btn btn-ghost" title="Clear history"><i class="fas fa-trash"></i></button>
+      </div>
+
+      <div style="margin-top:12px" class="small-muted">Local history stores only metadata (no API keys / files).</div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:start;gap:12px">
+          <div>
+            <h2 style="margin:0">Auto-generate a Presentation</h2>
+            <div class="muted" style="margin-top:6px">Paste text / Markdown, choose provider & model, optionally upload a template and download the generated .pptx</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="clear-form" class="btn btn-ghost" title="Clear form"><i class="fas fa-eraser"></i></button>
+          </div>
+        </div>
+
+        <div class="slide-panel">
+          <!-- left: content -->
+          <section class="card" style="padding:14px">
+            <h4 style="margin-top:0">Content</h4>
+            <label for="text">Your Text or Markdown</label>
+            <textarea id="text" placeholder="Paste or type your content here..."></textarea>
+
+            <div style="display:grid;grid-template-columns:1fr 140px;gap:10px;margin-top:10px">
+              <div>
+                <label for="guidance">One-line guidance (optional)</label>
+                <input id="guidance" type="text" placeholder="e.g., investor pitch, tech summary">
+              </div>
+              <div>
+                <label for="num_slides">Number of slides</label>
+                <input id="num_slides" type="number" min="1" max="40" value="10">
+                <div class="small-muted">1–40</div>
+              </div>
+            </div>
+
+            <label for="ppt_name" style="margin-top:10px">Presentation name</label>
+            <input id="ppt_name" type="text" placeholder="e.g., Q4 Strategy Deck">
+
+            <label for="template" style="margin-top:10px">Template (.pptx/.potx) — optional</label>
+            <input id="template" type="file" accept=".pptx,.potx">
+
+            <label style="margin-top:10px"><input id="reuse_images" type="checkbox"> Reuse images from template (safe placement)</label>
+          </section>
+
+          <!-- right: provider & controls -->
+          <aside class="card" style="padding:14px">
+            <h4 style="margin-top:0">Provider & Settings</h4>
+
+            <label for="provider">LLM Provider</label>
+            <select id="provider">
+              <option value="aipipe">AI Pipe (OpenRouter)</option>
+              <option value="openai">OpenAI</option>
+              <option value="gemini">Gemini (Google)</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+            </select>
+
+            <label for="api_key" style="margin-top:8px">API Key / Token</label>
+            <div style="display:flex;gap:8px">
+              <input id="api_key" type="password" placeholder="Paste your key/token..." style="flex:1">
+              <button id="paste_key" class="nav-btn" title="Paste from clipboard"><i class="fas fa-clipboard"></i></button>
+            </div>
+
+            <label for="model" style="margin-top:8px">Model</label>
+            <select id="model"></select>
+            <div id="model_hint" class="small-muted" style="margin-top:6px">Select provider to view models</div>
+
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button id="generate" class="btn btn-primary" disabled><i class="fas fa-magic"></i> Generate .pptx</button>
+              <button id="btn_clear" class="btn btn-ghost">Clear</button>
+            </div>
+
+            <div id="status" aria-live="polite" class="small-muted" style="margin-top:10px"></div>
+          </aside>
+        </div>
+
+        <!-- output preview -->
+        <div id="output" style="margin-top:12px"></div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toasts" class="toast-wrap" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  (function(){
+    const providerEl    = document.getElementById('provider');
+    const modelEl       = document.getElementById('model');
+    const modelHintEl   = document.getElementById('model_hint');
+    const apiKeyEl      = document.getElementById('api_key');
+    const pasteKeyBtn   = document.getElementById('paste_key');
+    const textEl        = document.getElementById('text');
+    const guidanceEl    = document.getElementById('guidance');
+    const numSlidesEl   = document.getElementById('num_slides');
+    const pptNameEl     = document.getElementById('ppt_name');
+    const templateEl    = document.getElementById('template');
+    const reuseImagesEl = document.getElementById('reuse_images');
+    const generateBtn   = document.getElementById('generate');
+    const clearBtn      = document.getElementById('btn_clear');
+    const clearFormBtn  = document.getElementById('clear-form');
+    const statusEl      = document.getElementById('status');
+    const outputEl      = document.getElementById('output');
+    const historyListEl = document.getElementById('historyList');
+    const exportHistoryBtn = document.getElementById('export-history');
+    const clearHistoryBtn  = document.getElementById('clear-history');
+    const toastsEl      = document.getElementById('toasts');
+    const themeToggle   = document.getElementById('theme-toggle');
+
+    const HISTORY_KEY = 'ppt_deck_history_v1';
+    const STATE_KEY   = 'ppt_deck_state_v1';
+    let lastBlobUrl = null;
+
+    const MODELS = {
+      openai: [
+        {id:'gpt-4o-mini', label:'gpt-4o-mini'},
+        {id:'gpt-4o', label:'gpt-4o'},
+        {id:'gpt-4.1-nano', label:'gpt-4.1-nano'},
+        {id:'gpt-4o-realtime-preview', label:'gpt-4o-realtime-preview'},
+        {id:'gpt-4.1', label:'gpt-4.1'}
+      ],
+      aipipe: [
+        {id:'gpt-4o-mini', label:'gpt-4o-mini'},
+        {id:'gpt-4o', label:'gpt-4o'},
+        {id:'gpt-4.1-nano', label:'gpt-4.1-nano'}
+      ],
+      gemini: [
+        {id:'gemini-2.0-flash', label:'gemini-2.0-flash'},
+        {id:'gemini-2.5-flash', label:'gemini-2.5-flash'},
+        {id:'gemini-2.5-pro', label:'gemini-2.5-pro'}
+      ],
+      anthropic: [
+        {id:'claude-haiku-4-5-20251001', label:'claude-haiku-4-5'},
+        {id:'claude-sonnet-4-6', label:'claude-sonnet-4-6'},
+        {id:'claude-opus-4-6', label:'claude-opus-4-6'},
+        {id:'claude-3-5-sonnet-latest', label:'claude-3-5-sonnet-latest'}
+      ]
+    };
+
+    function toast(msg, kind='info') {
+      const el = document.createElement('div');
+      el.className = 'toast ' + (kind==='success'?'success': kind==='error'?'error':'');
+      el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div>${msg}</div><button aria-label="close" style="background:none;border:none;color:var(--muted);cursor:pointer">&times;</button></div>`;
+      toastsEl.appendChild(el);
+      el.querySelector('button').onclick = () => el.remove();
+      setTimeout(() => el.remove(), 4500);
+    }
+
+    function readHistory() {
+      try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+    }
+    function writeHistory(arr) {
+      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(arr.slice(0, 200))); } catch {}
+    }
+    function addHistory(meta) { const arr = readHistory(); arr.unshift(meta); writeHistory(arr); renderHistory(); }
+
+    function renderHistory() {
+      const arr = readHistory();
+      historyListEl.innerHTML = '';
+      if (!arr.length) { historyListEl.innerHTML = '<div class="small-muted">No generations yet</div>'; return; }
+      for (const h of arr) {
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px;gap:8px';
+        el.innerHTML = `<div><strong>${escapeHtml(h.name || h.title || 'Deck')}</strong><div class="small-muted">${new Date(h.ts).toLocaleString()} • ${h.model||''} • ${h.slides} slides</div></div>
+                        <div style="display:flex;gap:8px">
+                          <button class="btn btn-ghost btn-sm" data-act="recreate" title="Reload params"><i class="fas fa-repeat"></i></button>
+                          <button class="btn btn-ghost btn-sm" data-act="download" title="Re-generate & download"><i class="fas fa-download"></i></button>
+                        </div>`;
+        historyListEl.appendChild(el);
+        el.querySelector('[data-act="recreate"]').onclick = () => { genLoadMeta(h); toast('Parameters loaded', 'success'); };
+        el.querySelector('[data-act="download"]').onclick = () => { genLoadMeta(h); generate(); toast('Recreating deck…', 'info'); };
+      }
+    }
+
+    function escapeHtml(s='') { return (''+s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function loadState() {
+      try {
+        const s = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
+        if (s.apiKeyPrefix) apiKeyEl.value = s.apiKeyPrefix;
+      } catch {}
+    }
+    function saveState() {
+      try { localStorage.setItem(STATE_KEY, JSON.stringify({ apiKeyPrefix: apiKeyEl.value ? apiKeyEl.value.slice(0,32) : '' })); } catch {}
+    }
+    window.addEventListener('beforeunload', saveState);
+
+    function applyModels() {
+      const p = providerEl.value;
+      modelEl.innerHTML = '';
+      (MODELS[p] || []).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id; opt.textContent = m.label;
+        modelEl.appendChild(opt);
+      });
+      modelHintEl.textContent = p === 'openai' ? 'OpenAI models' : p === 'aipipe' ? 'AI Pipe (OpenRouter) models' : p === 'anthropic' ? 'Anthropic models' : 'Gemini models';
+    }
+
+    providerEl.addEventListener('change', () => { applyModels(); validate(); });
+
+    pasteKeyBtn.addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        apiKeyEl.value = (text || '').trim();
+        toast('API key pasted', 'success');
+        validate();
+      } catch { toast('Clipboard access denied', 'error'); }
+    });
+
+    function validate() {
+      const ok = (textEl.value||'').trim().length > 10 &&
+                 (apiKeyEl.value||'').trim().length > 6 &&
+                 Number(numSlidesEl.value) >= 1 && Number(numSlidesEl.value) <= 40;
+      generateBtn.disabled = !ok;
+      return ok;
+    }
+    [textEl, apiKeyEl, numSlidesEl].forEach(el => el.addEventListener('input', validate));
+    applyModels(); loadState(); renderHistory(); validate();
+
+    clearBtn.addEventListener('click', () => {
+      textEl.value=''; guidanceEl.value=''; numSlidesEl.value=10; pptNameEl.value='';
+      templateEl.value=''; reuseImagesEl.checked=false; statusEl.textContent=''; validate();
+    });
+    clearFormBtn.addEventListener('click', () => clearBtn.click());
+
+    function getFileName() {
+      const name = (pptNameEl.value || '').trim();
+      return name ? name.replace(/[\\/:*?"<>|]/g, '_') + '.pptx' : 'generated.pptx';
+    }
+
+    async function generate() {
+      if (!validate()) { toast('Please complete required fields', 'error'); return; }
+      setBusy(true);
+      statusEl.textContent = 'Generating…';
+
+      try {
+        const fd = new FormData();
+        fd.append('text',        (textEl.value||'').trim());
+        fd.append('guidance',    (guidanceEl.value||'').trim());
+        fd.append('provider',    providerEl.value);
+        fd.append('api_key',     apiKeyEl.value);
+        fd.append('model',       modelEl.value);
+        fd.append('num_slides',  numSlidesEl.value);
+        fd.append('reuse_images', reuseImagesEl.checked ? 'true' : 'false');
+        if (templateEl.files && templateEl.files[0]) fd.append('template', templateEl.files[0]);
+
+        const resp = await fetch('/generate', { method:'POST', body: fd });
+        if (!resp.ok) {
+          const txt = await resp.text().catch(()=>'');
+          let hint = '';
+          if (resp.status===401) hint=' — invalid/missing key';
+          else if (resp.status===429) hint=' — rate limit';
+          else if (/model|not\s*found|unsupported/i.test(txt)) hint=' — model not allowed for your key';
+          throw new Error(`Server ${resp.status}${hint} ${txt}`);
+        }
+
+        const blob = await resp.blob();
+        if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+        lastBlobUrl = URL.createObjectURL(blob);
+
+        const fileName = getFileName();
+        const meta = {
+          ts: Date.now(),
+          name: (pptNameEl.value||'').trim() || null,
+          title: (guidanceEl.value || textEl.value.slice(0,80)).replace(/\n/g,' '),
+          slides: Number(numSlidesEl.value),
+          provider: providerEl.value,
+          model: modelEl.value,
+          text: (textEl.value||'').slice(0,200),
+          fileName,
+        };
+        addHistory(meta);
+        renderOutput(meta);
+        statusEl.textContent = 'Ready';
+        toast('Presentation generated', 'success');
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Error: ' + (err.message||'Unknown');
+        toast('Generate failed: ' + (err.message||'Unknown'), 'error');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function setBusy(b) {
+      generateBtn.disabled = b;
+      generateBtn.innerHTML = b ? '<i class="fas fa-circle-notch fa-spin"></i> Generating...' : '<i class="fas fa-magic"></i> Generate .pptx';
+    }
+
+    function renderOutput(meta) {
+      outputEl.innerHTML = '';
+      const box = document.createElement('div');
+      box.className = 'card';
+      box.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px';
+      box.innerHTML = `<div><strong>${escapeHtml(meta.name || meta.title)}</strong>
+                         <div class="small-muted">${new Date(meta.ts).toLocaleString()} • ${meta.slides} slides • ${meta.model}</div></div>
+                       <button id="dl-now" class="btn btn-primary small"><i class="fas fa-download"></i> Download ${escapeHtml(meta.fileName)}</button>`;
+      outputEl.appendChild(box);
+      document.getElementById('dl-now').onclick = () => {
+        if (!lastBlobUrl) { toast('No file available', 'error'); return; }
+        const a = document.createElement('a'); a.href = lastBlobUrl; a.download = meta.fileName; a.click();
+      };
+    }
+
+    function genLoadMeta(h) {
+      textEl.value    = h.text     || textEl.value;
+      guidanceEl.value= h.guidance || guidanceEl.value;
+      numSlidesEl.value = h.slides || numSlidesEl.value;
+      pptNameEl.value = h.name    || '';
+      providerEl.value = h.provider || providerEl.value;
+      applyModels();
+      modelEl.value = h.model || modelEl.value;
+      validate();
+    }
+
+    exportHistoryBtn.addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(readHistory(), null, 2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ppt_deck_history.json'; a.click();
+    });
+    clearHistoryBtn.addEventListener('click', () => { writeHistory([]); renderHistory(); toast('History cleared', 'success'); });
+
+    function applyTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      themeToggle.querySelector('i').className = t==='light' ? 'fas fa-sun' : 'fas fa-moon';
+      try { localStorage.setItem('ppt_theme', t); } catch {}
+    }
+    themeToggle.addEventListener('click', () => {
+      applyTheme(document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='g') { e.preventDefault(); if (!generateBtn.disabled) generate(); }
+    });
+
+    generateBtn.addEventListener('click', generate);
+
+    (function init() {
+      try {
+        const saved = localStorage.getItem('ppt_theme');
+        applyTheme(saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+      } catch { applyTheme('dark'); }
+      loadState(); applyModels(); renderHistory();
+    })();
+  })();
+  </script>
+</body>
+</html>
